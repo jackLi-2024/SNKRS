@@ -31,7 +31,7 @@ sys.path.append("%s/" % cur_dir)
 class Browser(object):
     """browser"""
 
-    def __init__(self, url="", proxies=None, headless=None, ):
+    def __init__(self, proxies=None, headless=None, ):
         """
         :param url: 访问的url
         :param proxies: 代理
@@ -106,6 +106,11 @@ class Browser(object):
         )
 
     def __del__(self):
+        """当消除browser时,会先关闭浏览器"""
+        self.browser.close()
+
+    def close(self):
+        """手动关闭浏览器"""
         self.browser.close()
 
 
@@ -193,15 +198,16 @@ def test_browser():
     import time
     t0 = time.time()
     B = Browser(headless=False)
-    # try:
-    B.get(url="https://www.nike.com/cn/launch/")
-    B.wait_for_element_loaded("join-log-in", By.CLASS_NAME)
-    elem_log = B.browser.find_element_by_class_name("join-log-in")
-    B.click_elem(elem_log)
-    print(B.browser.page_source.encode("utf8"))
-    print(time.time() - t0)
-    # except:
-    #     print(traceback.print_exc())
+    try:
+        B.get(url="https://www.nike.com/cn/launch/")
+        B.wait_for_element_loaded("join-log-in", By.CLASS_NAME)
+        elem_log = B.browser.find_element_by_class_name("join-log-in1")
+        B.click_elem(elem_log)
+        print(B.browser.page_source.encode("utf8"))
+        print(time.time() - t0)
+    except:
+        print(traceback.print_exc())
+        B.browser.close()
 
 
 def test_spider():
