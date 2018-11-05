@@ -31,7 +31,7 @@ sys.path.append("%s/" % cur_dir)
 class Browser(object):
     """browser"""
 
-    def __init__(self, proxies=None, headless=None, ):
+    def __init__(self, proxies=None, headless=None, timeout=20):
         """
         :param url: 访问的url
         :param proxies: 代理
@@ -39,6 +39,7 @@ class Browser(object):
         """
         self.proxies = proxies
         self.headless = headless
+        self.timeout = timeout
         self.browser = self.driver()
 
     def proxy(self):
@@ -81,7 +82,8 @@ class Browser(object):
                 browser_driver = webdriver.Firefox(proxy=proxy)
             else:
                 browser_driver = webdriver.Firefox()
-
+        browser_driver.set_page_load_timeout(self.timeout)
+        browser_driver.set_script_timeout(self.timeout)
         return browser_driver
 
     def get(self, url):

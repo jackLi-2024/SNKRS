@@ -55,18 +55,20 @@ class Loginer(object):
             self.B.click_elem(elem_submit)
             self.B.browser.implicitly_wait(10)
             elem_username = self.B.browser.find_element_by_xpath("//span[@data-qa='user-name']")
-            return elem_username.text
+            logging.info("%s : (login successful %s)" % (time.asctime(), self.username))
+            return {"username": self.username, "status": "1", "item": "login"}
         except Exception as e:
             logging.exception(
                 "%s : (login defeat %s) %s" % (time.asctime(), self.username, str(e)))
             self.B.close()
+            return {"username": self.username, "status": "-1", "item": "login"}
 
 
 def test():
     """unittest"""
     browsers = []
     loginer = Loginer(username="18404983790", password="Ljc19941108", headless=False)
-    if loginer.login(url="https://www.nike.com/cn/launch/"):
+    if loginer.login(url="https://www.nike.com/cn/launch/").get("status", "-1") == "1":
         browsers.append(loginer.B)
     for one in browsers:
         one.get("https://www.baidu.com")
