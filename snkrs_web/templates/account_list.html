@@ -135,7 +135,9 @@
                 </button>
                 <h4 class="modal-title">用户信息</h4>
             </div>
-            <form class="form-horizontal" action="/account_list/" method="post">
+            {% comment %} <form class="form-horizontal" action="/account_list/" method="post"> {% endcomment %}
+            <form class="form-horizontal">
+                {% comment %} {% csrf_token %} {% endcomment %}
                 {% if message %}
                 <div class="alert alert-warning">{{ message }}</div>
                 {% endif %}
@@ -155,9 +157,9 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="submit" class="btn btn-primary">保存</button>
+                    <button type="submit" class="btn btn-primary" id="save">保存</button>
                 </div>
-                <p style="color: red">{{ error }}</p>
+                <span id="error" style="color: red"></span>
             </form>
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
@@ -168,6 +170,23 @@
 <!-- Placed at the end of the document so the pages load faster -->
 <script src="/static/jquery-3.3.1.js"></script>
 <script src="/static/bootstrap/js/bootstrap.min.js"></script>
+<script>
+    $("#save").click(function(){
+        $.ajax({
+            url:"/account_list/",
+            type:"post",
+            data:{
+                "phone": $("#phone").val(),
+                "password":$("#password").val(),
+                "csrfmiddlewaretoken":$('[name="csrfmiddlewaretoken"]').val()
+            },
+            success:function(data){
+                var dataObj=JSON.parse(data);
+                $("#error").text(dataObj["msg"])
+            }
+        })
+    })
+</script>
 
 </body>
 </html>
