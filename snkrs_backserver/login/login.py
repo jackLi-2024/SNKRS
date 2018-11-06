@@ -67,7 +67,7 @@ class Loginer(object):
 def test():
     """unittest"""
     browsers = []
-    loginer = Loginer(username="18404983790", password="Ljc19941108", headless=False)
+    loginer = Loginer(username="18404983790", password="xxxxxx", headless=False)
     if loginer.login(url="https://www.nike.com/cn/launch/").get("status", "-1") == "1":
         browsers.append(loginer.B)
     for one in browsers:
