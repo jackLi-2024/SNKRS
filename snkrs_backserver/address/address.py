@@ -7,10 +7,12 @@ Author: Lijiacai (v_lijiacai@baidu.com)
 Date: 2018-xx-xx
 Description:
 """
+import json
 import logging
 import os
 import sys
 import time
+import multiprocessing
 
 cur_dir = os.path.split(os.path.realpath(__file__))[0]
 sys.path.append("%s/../" % cur_dir)
@@ -22,7 +24,7 @@ class Addr(object):
     """配送地址"""
 
     def __init__(self, username="", password="", lastname="", firstname="", province="", city="",
-                 district="", detail_address="", phone_num="", ):
+                 district="", detail_address="", phone_num=""):
         """
         相关参数初始化
         :param username: 用户名
@@ -44,6 +46,7 @@ class Addr(object):
         self.district = district
         self.detail_address = detail_address
         self.phone_num = phone_num
+        self.setting_status = self.setting_addr(url="https://www.nike.com/cn/zh_cn/p/settings")
 
     def login(self):
         """配置地址之前需要登陆"""
@@ -116,22 +119,59 @@ class Addr(object):
                 save_button.click()
                 # todo:这里需要验证是否保存时候一定配置成功
                 B.close()
-                return {"username": self.username, "status": "1", "item": "address"}
+                # todo:这里需要导入相应的django模块数据库，将以下状态存入数据库
+                now = time.strftime("%Y-%m-%d",
+                                    time.localtime(time.time() - 24 * 60 * 60 * 0))
+                return {"username": self.username, "status": "1", "item": "address",
+                        "settingTime": "%s" % now}
             except Exception as e:
                 logging.exception(
                     "%s :(address defeat %s) %s" % (time.asctime(), self.username, str(e)))
                 B.close()
-                return {"username": self.username, "status": "-1", "item": "address"}
+                now = time.strftime("%Y-%m-%d",
+                                    time.localtime(time.time() - 24 * 60 * 60 * 0))
+                return {"username": self.username, "status": "-1", "item": "address",
+                        "settingTime": "%s" % now}
+
+
+def run(process_num=10):
+    """
+    addr_info: 命令行获取需要配置的用户信息及配送地址,例如：
+                [{"username":"18404983790", "password":"Ljc19941108",
+                "lastname":"lee", "firstname":"jack",
+                "province":"黑龙江省", "city":"绥化市",
+                "district":"安达市", "detail_address":"中国黑龙江绥化市安达市栖霞小区9栋505",
+                "phone_num":"00000000000"}]
+    进程数默认10个进程
+    """
+    p = multiprocessing.Pool(process_num)
+    addr_info = json.loads(sys.argv[1])
+    for one in addr_info:
+        username = one.get("username", "")
+        password = one.get("password", "")
+        lastname = one.get("lastname", "")
+        firstname = one.get("firstname", "")
+        province = one.get("province", "")
+        city = one.get("city", "")
+        district = one.get("district", "")
+        detail_address = one.get("detail_address", "")
+        phone_num = one.get("username", "")
+        if username and password and lastname and firstname and province and city and detail_address and phone_num:
+            p.apply_async(Addr, args=(
+                username, password, lastname, firstname, province, city, district, detail_address,
+                phone_num))
+    p.close()
+    p.join()
 
 
 def test():
     """unittest"""
-    addr = Addr(username="18404983790", password="Ljc19941108", lastname="lee", firstname="jack",
+    addr = Addr(username="xxxxx", password="xxxxxxx", lastname="lee", firstname="jack",
                 province="黑龙江省", city="绥化市",
                 district="安达市", detail_address="中国黑龙江绥化市安达市栖霞小区9栋505",
                 phone_num="00000000000")
-    print(addr.setting_addr(url="https://www.nike.com/cn/zh_cn/p/settings"))
+    print(addr.setting_status)
 
 
 if __name__ == '__main__':
-    test()
+    run()
