@@ -21,7 +21,7 @@ from manager.spider import *
 class Loginer(object):
     """login"""
 
-    def __init__(self, username="", password="", headless=True, proxies=None):
+    def __init__(self, username="", password="", headless=True, proxies=None, timeout=20):
         """
 
         :param username: 用户名
@@ -32,7 +32,9 @@ class Loginer(object):
         self.username = username
         self.password = password
         self.proxies = proxies
-        self.B = Browser(self.proxies)
+        self.headless = headless
+        self.timeout = timeout
+        self.B = Browser(self.proxies, self.headless, self.timeout)
 
     def login(self, url):
         """
@@ -67,7 +69,7 @@ class Loginer(object):
 def test():
     """unittest"""
     browsers = []
-    loginer = Loginer(username="18404983790", password="xxxxxx", headless=False)
+    loginer = Loginer(username="18404983790", password="Ljc19941108", headless=False)
     if loginer.login(url="https://www.nike.com/cn/launch/").get("status", "-1") == "1":
         browsers.append(loginer.B)
     for one in browsers:

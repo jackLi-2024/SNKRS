@@ -56,10 +56,11 @@ class Browser(object):
     def driver(self):
         """create a browser"""
         if self.headless:
+            print "1"
             options = webdriver.FirefoxOptions()
             options.set_headless()
             # options=None
-            options.add_argument('-headless')
+            options.add_argument('headless')
             options.add_argument('--disable-gpu')
             if self.proxies:
                 proxy = Proxy(
@@ -109,7 +110,11 @@ class Browser(object):
 
     def __del__(self):
         """当消除browser时,会先关闭浏览器"""
-        self.browser.close()
+        try:
+            self.browser.close()
+        except Exception as e:
+            logging.exception(str(e))
+            pass
 
     def close(self):
         """手动关闭浏览器"""
