@@ -29,9 +29,9 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="https://v3.bootcss.com/examples/dashboard/#">BMS-S10</a>
+            <a class="navbar-brand">SNKRS</a>
         </div>
-        <div id="navbar" class="navbar-collapse collapse">
+        {% comment %} <div id="navbar" class="navbar-collapse collapse">
             <ul class="nav navbar-nav navbar-right">
                 <li><a href="https://v3.bootcss.com/examples/dashboard/#">Dashboard</a></li>
                 <li><a href="https://v3.bootcss.com/examples/dashboard/#">Settings</a></li>
@@ -41,7 +41,7 @@
             <form class="navbar-form navbar-right">
                 <input type="text" class="form-control" placeholder="Search...">
             </form>
-        </div>
+        </div> {% endcomment %}
     </div>
 </nav>
 
@@ -63,16 +63,16 @@
                 <div class="panel-heading">账号列表 <i class="fa fa-thumb-tack pull-right"></i></div>
                 <div class="panel-body">
                     <div class="row" style="margin-bottom: 15px">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="input-group">
-                                <input type="text" class="form-control" placeholder="Search for...">
+                                <input type="text" class="form-control" placeholder="请输入手机号码">
                                 <span class="input-group-btn">
                                     <button class="btn btn-default" type="button">搜索</button>
                                 </span>
                             </div><!-- /input-group -->
                         </div><!-- /.col-md-4 -->
-                        <div class="col-md-1 pull-right">
-                            <button class="btn btn-success" data-toggle="modal" data-target="#myModal">新增</button>
+                        <div class="col-md-9 pull-right">
+                            <button class="btn btn-success" data-toggle="modal" data-target="#myModal">新增账号</button>
                         </div>
 
                     </div><!-- /.row -->
@@ -83,7 +83,6 @@
                             <th>#</th>
                             <th>手机号码</th>
                             <th>密码</th>
-                            <th>地址</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -136,26 +135,32 @@
                 </button>
                 <h4 class="modal-title">用户信息</h4>
             </div>
-            <div class="modal-body">
-                <form class="form-horizontal">
-                    <div class="form-group">
-                        <label for="inputEmail3" class="col-sm-2 control-label">邮箱</label>
-                        <div class="col-sm-10">
-                            <input type="email" class="form-control" id="inputEmail3" placeholder="Email">
-                        </div>
+            {% comment %} <form class="form-horizontal" action="/account_list/" method="post"> {% endcomment %}
+            <form class="form-horizontal">
+                {% comment %} {% csrf_token %} {% endcomment %}
+                {% if message %}
+                <div class="alert alert-warning">{{ message }}</div>
+                {% endif %}
+                <div class="modal-body">
+                <div class="form-group">
+                    <label for="phone" class="col-sm-2 control-label">手机号</label>
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" name="phone" placeholder="Phone">
                     </div>
-                    <div class="form-group">
-                        <label for="inputPassword3" class="col-sm-2 control-label">密码</label>
-                        <div class="col-sm-10">
-                            <input type="password" class="form-control" id="inputPassword3" placeholder="Password">
-                        </div>
+                </div>
+                <div class="form-group">
+                    <label for="password" class="col-sm-2 control-label">密码</label>
+                    <div class="col-sm-10">
+                        <input type="password" class="form-control" name="password" placeholder="Password">
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary">保存</button>
-            </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary" id="save">保存</button>
+                </div>
+                <span id="error" style="color: red"></span>
+            </form>
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
@@ -165,6 +170,23 @@
 <!-- Placed at the end of the document so the pages load faster -->
 <script src="/static/jquery-3.3.1.js"></script>
 <script src="/static/bootstrap/js/bootstrap.min.js"></script>
+<script>
+    $("#save").click(function(){
+        $.ajax({
+            url:"/account_list/",
+            type:"post",
+            data:{
+                "phone": $("#phone").val(),
+                "password":$("#password").val(),
+                "csrfmiddlewaretoken":$('[name="csrfmiddlewaretoken"]').val()
+            },
+            success:function(data){
+                var dataObj=JSON.parse(data);
+                $("#error").text(dataObj["msg"])
+            }
+        })
+    })
+</script>
 
 </body>
 </html>
