@@ -74,8 +74,6 @@ class Addr(object):
                 # 选中设置地址
                 B.wait_for_element_loaded("addresses", By.CLASS_NAME)
                 elem_addresses = B.browser.find_element_by_class_name("addresses")
-                time.sleep(3)
-                raw_input()
                 B.click_elem(elem_addresses)
                 # 编辑地址
                 B.wait_for_element_loaded("edit-button-container", By.CLASS_NAME)
