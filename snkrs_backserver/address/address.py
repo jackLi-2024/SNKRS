@@ -13,6 +13,7 @@ import os
 import sys
 import time
 import multiprocessing
+import django
 
 cur_dir = os.path.split(os.path.realpath(__file__))[0]
 sys.path.append("%s/../" % cur_dir)
@@ -24,7 +25,8 @@ class Addr(object):
     """配送地址"""
 
     def __init__(self, username="", password="", lastname="", firstname="", province="", city="",
-                 district="", detail_address="", phone_num=""):
+                 district="", detail_address="", phone_num="", headless=False, proxies=None,
+                 timeout=20):
         """
         相关参数初始化
         :param username: 用户名
@@ -46,12 +48,16 @@ class Addr(object):
         self.district = district
         self.detail_address = detail_address
         self.phone_num = phone_num
+        self.proxies = proxies
+        self.headless = headless
+        self.timeout = timeout
         self.setting_status = self.setting_addr(url="https://www.nike.com/cn/zh_cn/p/settings")
 
     def login(self):
         """配置地址之前需要登陆"""
-        loginer = Loginer(username=self.username, password=self.password, headless=False)
-        if loginer.login(url="https://www.nike.com/cn/launch/"):
+        loginer = Loginer(username=self.username, password=self.password, headless=self.headless,
+                          proxies=self.proxies, timeout=self.timeout)
+        if loginer.login(url="https://www.nike.com/cn/launch/").get("status", "-1") == "1":
             return loginer.B
 
     def setting_addr(self, url):
@@ -61,13 +67,15 @@ class Addr(object):
         :return:
         """
         B = self.login()
-        if B.get("status", "-1"):
+        if B:
             try:
                 # 设置请求url
                 B.get(url)
                 # 选中设置地址
                 B.wait_for_element_loaded("addresses", By.CLASS_NAME)
                 elem_addresses = B.browser.find_element_by_class_name("addresses")
+                time.sleep(3)
+                raw_input()
                 B.click_elem(elem_addresses)
                 # 编辑地址
                 B.wait_for_element_loaded("edit-button-container", By.CLASS_NAME)
@@ -132,6 +140,11 @@ class Addr(object):
                                     time.localtime(time.time() - 24 * 60 * 60 * 0))
                 return {"username": self.username, "status": "-1", "item": "address",
                         "settingTime": "%s" % now}
+        else:
+            now = time.strftime("%Y-%m-%d",
+                                time.localtime(time.time() - 24 * 60 * 60 * 0))
+            return {"username": self.username, "status": "-1", "item": "login",
+                    "settingTime": "%s" % now}
 
 
 def run(process_num=10):
@@ -166,10 +179,10 @@ def run(process_num=10):
 
 def test():
     """unittest"""
-    addr = Addr(username="xxxxx", password="xxxxxxx", lastname="lee", firstname="jack",
-                province="黑龙江省", city="绥化市",
-                district="安达市", detail_address="中国黑龙江绥化市安达市栖霞小区9栋505",
-                phone_num="00000000000")
+    addr = Addr(username="18404983790", password="Ljc19941108", lastname="lee", firstname="jack",
+                province=u"黑龙江省", city=u"绥化市",
+                district=u"安达市", detail_address=u"中国黑龙江绥化市安达市栖霞小区9栋505",
+                phone_num="00000000000", headless=True, proxies=None, timeout=40)
     print(addr.setting_status)
 
 
