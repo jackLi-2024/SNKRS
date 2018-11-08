@@ -63,13 +63,13 @@ class Loginer(object):
             logging.exception(
                 "%s : (login defeat %s) %s" % (time.asctime(), self.username, str(e)))
             self.B.close()
-            return {"username": self.username, "status": "-1", "item": "login"}
+            return {"username": self.username, "status": "-1", "item": "login", "msg": e.args[0]}
 
 
 def test():
     """unittest"""
     browsers = []
-    loginer = Loginer(username="18404983790", password="Ljc19941108", headless=False)
+    loginer = Loginer(username="18404983790", password="Ljc199411081", headless=True, proxies=None, timeout=5)
     if loginer.login(url="https://www.nike.com/cn/launch/").get("status", "-1") == "1":
         browsers.append(loginer.B)
     for one in browsers:

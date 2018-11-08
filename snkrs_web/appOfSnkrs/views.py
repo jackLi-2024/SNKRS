@@ -1,49 +1,33 @@
 import sys
 import os.path as path
 sys.path.append(path.dirname(path.dirname(path.dirname(path.abspath(__file__)))))
-from django.shortcuts import render, HttpResponse, redirect
+from django.shortcuts import render, HttpResponse, redirect, HttpResponseRedirect
 from appOfSnkrs import models
 from snkrs_backserver.login.login import *
 import json
 
 
-
 # Create your views here.
 
-# 账号列表
 def account_list(request):
-    ret = models.Account.objects.all().order_by("id")
-    return render(request, "account_list.html", {"account_list": ret})
-
-# 添加账号
-def add_account(request):
     if request.is_ajax():
         phone = request.POST.get("phone")
         password = request.POST.get("password")
-        print(phone)
-        print(password)
-        loginer = Loginer(username=phone, password=password, headless=True)
-        print(loginer.username)
-        if loginer.login(url="https://www.nike.com/cn/launch/").get("status", "-1") != "1":
-            error = {"msg": "手机号码错误"}
-            loginer.B.close()
+        loginer = Loginer(username=phone, password=password, headless=True, proxies=None, timeout=60)
+        data = loginer.login(url="https://www.nike.com/cn/launch/")
+        if data.get("status", "-1") != "1":
+            msg = data.get("msg", "-1")
+            if msg.startswith("Timeout"):
+                error = {"msg": "链接超时，请稍后再试"}
+            else:
+                error = {"msg": "手机号码或密码错误错误"}
             return HttpResponse(json.dumps(error))
         else:
-            ret = models.Account.objects.all().order_by("id")
-            return render(request, "account_list.html", {"account_list": ret})
-
-
-# # 添加账号
-# def add_account(request):
-#     error_msg = ""
-#     if request.method == "POST":
-#         phone = request.POST.get("phone", None)
-#         password = request.POST.get("password", None)
-#         print(phone)
-#         print(password)
-#         # if new_name:
-#         #     models.Account.objects.create(name=new_name)
-#         #     return redirect("/account_list/")
-#         # else:
-#         #     error_msg = "出版社名字不能为空!"
-#     return render(request, "account_list.html", {"error": error_msg})
+            print("登录成功")
+            models.Account.objects.create(phone=phone, password=password)
+            loginer.B.close()
+            error = {"msg": "success"}
+            return HttpResponse(json.dumps(error))
+    else:
+        ret = models.Account.objects.all().order_by("id")
+        return render(request, "account_list.html", {"account_list": ret})

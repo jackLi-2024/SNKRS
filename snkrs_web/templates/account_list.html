@@ -155,11 +155,11 @@
                     </div>
                     </div>
                 </div>
+                <span id="error" style="color: red"></span>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal" id="exit">取消</button>
                     <button type="button" class="btn btn-primary" id="save">保存</button>
                 </div>
-                <span id="error" style="color: red"></span>
             </form>
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
@@ -172,8 +172,10 @@
 <script src="/static/bootstrap/js/bootstrap.min.js"></script>
 <script>
     $("#save").click(function(){
+        $("#error").text("")
         $.ajax({
-            url:"add_account/",
+            {% comment %} url:"add_account/", {% endcomment %}
+            url:"/account_list/", 
             type:"post",
             data:{
                 "phone": $("#phone").val(),
@@ -182,8 +184,13 @@
             },
             success:function(data){
                 var dataObj=JSON.parse(data);
-                $("#error").text(dataObj["msg"])
-            }
+                if(dataObj["msg"] == "success"){
+                    $("#exit").click()
+                }
+                else{
+                    $("#error").text(dataObj["msg"])
+                }
+            } 
         })
     })
 </script>

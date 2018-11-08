@@ -56,7 +56,6 @@ class Browser(object):
     def driver(self):
         """create a browser"""
         if self.headless:
-            print "1"
             options = webdriver.FirefoxOptions()
             options.set_headless()
             # options=None

@@ -19,6 +19,5 @@ from appOfSnkrs import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('account_list/',views.account_list),
-    path('account_list/add_account/',views.add_account)
+    path('account_list/', views.account_list),
 ]
