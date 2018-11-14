@@ -13,7 +13,7 @@ import random
 import sys
 import time
 import traceback
-
+import signal
 import requests
 import logging
 from selenium import webdriver
@@ -23,15 +23,22 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+
+reload(sys)
+sys.setdefaultencoding("utf-8")
 
 cur_dir = os.path.split(os.path.realpath(__file__))[0]
 sys.path.append("%s/" % cur_dir)
+import api_proxy
+
+api = api_proxy.ApiProxy("8a060b135916458790bd342ce378576e")
 
 
 class Browser(object):
     """browser"""
 
-    def __init__(self, proxies=None, headless=None, timeout=20):
+    def __init__(self, proxies=None, headless=None, timeout=20, phantomjs_driver_path=None):
         """
         :param url: 访问的url
         :param proxies: 代理
@@ -40,6 +47,7 @@ class Browser(object):
         self.proxies = proxies
         self.headless = headless
         self.timeout = timeout
+        self.phantomjs_driver_path = phantomjs_driver_path
         self.browser = self.driver()
 
     def proxy(self):
@@ -47,15 +55,16 @@ class Browser(object):
            如果有其他代理，更改此处函数
         """
         if type(self.proxies) == list:
-            one_proxy = {"http": "http://%s" % random.choice(self.proxies),
-                         "https": "http://%s" % random.choice(self.proxies)}
+            one_proxy = random.choice(self.proxies)
+        elif self.proxies == "api":
+            one_proxy = random.choice(api.available_proxy())
         else:
             one_proxy = None
         return one_proxy
 
     def driver(self):
         """create a browser"""
-        if self.headless:
+        if self.headless == True:
             options = webdriver.FirefoxOptions()
             options.set_headless()
             # options=None
@@ -71,6 +80,24 @@ class Browser(object):
                 browser_driver = webdriver.Firefox(firefox_options=options, proxy=proxy)
             else:
                 browser_driver = webdriver.Firefox(firefox_options=options)
+        elif self.headless == "PhantomJS":
+            desired_capabilities = DesiredCapabilities.PHANTOMJS.copy()
+            desired_capabilities["phantomjs.page.settings.userAgent"] = ua()
+            desired_capabilities["phantomjs.page.settings.loadImages"] = False
+            if self.proxies:
+                proxy = webdriver.Proxy()
+                proxy.proxy_type = ProxyType.MANUAL
+                proxy.http_proxy = self.proxy()
+                proxy.add_to_capabilities(desired_capabilities)
+                browser_driver = webdriver.PhantomJS(executable_path=self.phantomjs_driver_path,
+                                                     desired_capabilities=desired_capabilities,
+                                                     service_args=['--ignore-ssl-errors=true',
+                                                      "--cookies-file=cookie.txt"])
+            else:
+                browser_driver = webdriver.PhantomJS(executable_path=self.phantomjs_driver_path,
+                                                     desired_capabilities=desired_capabilities,
+                                                     service_args=['--ignore-ssl-errors=true',
+                                                     "--cookies-file=cookie.txt"])
         else:
             if self.proxies:
                 proxy = Proxy(
@@ -110,20 +137,30 @@ class Browser(object):
     def __del__(self):
         """当消除browser时,会先关闭浏览器"""
         try:
-            self.browser.close()
-        except Exception as e:
-            logging.exception(str(e))
-            pass
+            self.browser.service.process.send_signal(signal.SIGTERM)
+            self.browser.quit()
+            logging.warn("***********上次关闭异常，此次成功(del)**********")
+        except:
+            logging.exception("***********上次正常关闭(del)**********")
 
     def close(self):
         """手动关闭浏览器"""
-        self.browser.close()
+        for i in range(20):
+            try:
+                self.browser.service.process.send_signal(signal.SIGTERM)
+                self.browser.quit()
+                print "browser close sucessful"
+                logging.info("browser close sucessful(close)")
+                break
+            except Exception as e:
+                logging.exception("***********关闭异常%d次(close)**********" % (i))
+                pass
 
 
 class Spider(object):
     """爬虫"""
 
-    def __init__(self, proxies=None, try_time=5, frequence=0.1, timeout=600):
+    def __init__(self, proxies=None, try_time=5, frequence=0.1, timeout=20):
         """
 
         :param proxies: 代理
@@ -144,6 +181,9 @@ class Spider(object):
         if type(self.proxies) == list:
             one_proxy = {"http": "http://%s" % random.choice(self.proxies),
                          "https": "http://%s" % random.choice(self.proxies)}
+        elif self.proxies == "api":
+            one_proxy = {"http": "http://%s" % random.choice(api.available_proxy()),
+                         "https": "http://%s" % random.choice(api.available_proxy())}
         else:
             one_proxy = None
         return one_proxy
@@ -158,7 +198,7 @@ class Spider(object):
         for try_time in range(self.try_time):
             try:
                 if self.proxies:
-                    response = self.session.get(url=url, headers=headers, proxies=self.proxy,
+                    response = self.session.get(url=url, headers=headers, proxies=self.proxy(),
                                                 verify=False,
                                                 timeout=self.timeout)
                 else:
@@ -169,6 +209,7 @@ class Spider(object):
                 result = response.text
                 return result
             except Exception as e:
+                # print traceback.print_exc()
                 logging.exception("%s forbidden:%s" % (time.asctime(), str(e)))
             time.sleep(self.frequence)
 
@@ -183,14 +224,14 @@ class Spider(object):
         for try_time in range(self.try_time):
             try:
                 if self.proxies:
-                    response = self.session.get(url=url, data=data, headers=headers,
-                                                proxies=self.proxy,
-                                                verify=False,
-                                                timeout=self.timeout)
+                    response = self.session.post(url=url, data=data, headers=headers,
+                                                 proxies=self.proxy(),
+                                                 verify=False,
+                                                 timeout=self.timeout)
                 else:
-                    response = self.session.get(url=url, data=data, headers=headers,
-                                                verify=False,
-                                                timeout=self.timeout)
+                    response = self.session.post(url=url, data=data, headers=headers,
+                                                 verify=False,
+                                                 timeout=self.timeout)
                 response.encoding = response_encode
                 result = response.text
                 return result
@@ -199,16 +240,43 @@ class Spider(object):
             time.sleep(self.frequence)
 
 
+def ua():
+    """
+    :return: get random header
+    """
+    ua_list = [
+        "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_8; en-us) \
+AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50",
+        "Mozilla/5.0 (Windows; U; Windows NT 6.1; en-us) \
+AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50",
+        "Mozilla/4.0 (compatible; MSIE 8.0;\
+Windows NT 6.0; Trident/4.0)",
+        "Mozilla/4.0 (compatible; MSIE 7.0; \
+Windows NT 6.0)",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.6; rv:2.0.1) \
+Gecko/20100101 Firefox/4.0.1",
+        "Mozilla/5.0 (Windows NT 6.1; rv:2.0.1) Gecko/20100101\
+Firefox/4.0.1",
+        "Opera/9.80 (Macintosh; Intel Mac OS X 10.6.8; U; en) \
+Presto/2.8.131 Version/11.11",
+        "Opera/9.80 (Windows NT 6.1; U; en) Presto/2.8.131 Version/11.11",
+        "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; \
+Trident/4.0; SE 2.X MetaSr 1.0; SE 2.X MetaSr 1.0; .NET CLR 2.0.50727; SE 2.X MetaSr 1.0)",
+        "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; 360SE)",
+    ]
+    return random.choice(ua_list)
+
+
 def test_browser():
     """unittest"""
     import time
     t0 = time.time()
-    B = Browser(headless=False)
+    B = Browser(headless="PhantomJS",
+                phantomjs_driver_path="/home/lijiacai/phantomjs-2.1.1-linux-x86_64/bin/phantomjs",
+                proxies="api")
     try:
-        B.get(url="https://www.nike.com/cn/launch/")
-        B.wait_for_element_loaded("join-log-in", By.CLASS_NAME)
-        elem_log = B.browser.find_element_by_class_name("join-log-in1")
-        B.click_elem(elem_log)
+        B.get(url="https://www.qichamao.com")
+        time.sleep(4)
         print(B.browser.page_source.encode("utf8"))
         print(time.time() - t0)
     except:
@@ -218,10 +286,16 @@ def test_browser():
 
 def test_spider():
     """unittest"""
-    spider = Spider()
-    print(spider.get(url="https://www.baidu.com"))
+    spider = Spider(proxies="api")
+    headers = {
+        "User-Agent": ua(),
+        "Host": "www.qichamao.com",
+
+    }
+    print headers
+    print(spider.get(url="https://www.qichamao.com", headers=headers).encode("utf8"))
 
 
 if __name__ == '__main__':
-    test_browser()
-    # test_spider()
+    # test_browser()
+    test_spider()
