@@ -137,18 +137,21 @@ class Browser(object):
     def __del__(self):
         """当消除browser时,会先关闭浏览器"""
         try:
-            self.browser.service.process.send_signal(signal.SIGTERM)
-            self.browser.quit()
+            # self.browser.service.process.send_signal(signal.SIGTERM)
+            self.browser.close()
+            # self.browser.quit()
             logging.warn("***********上次关闭异常，此次成功(del)**********")
         except:
             logging.exception("***********上次正常关闭(del)**********")
 
     def close(self):
         """手动关闭浏览器"""
+        # 不能quit(),原因不明
         for i in range(20):
             try:
-                self.browser.service.process.send_signal(signal.SIGTERM)
-                self.browser.quit()
+                # self.browser.service.process.send_signal(signal.SIGTERM)
+                self.browser.close()
+                # self.browser.quit()
                 print "browser close sucessful"
                 logging.info("browser close sucessful(close)")
                 break
