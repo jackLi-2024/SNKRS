@@ -91,10 +91,10 @@
                                 <td>{{ forloop.counter }}</td>
                                 <td>{{ account.phone }}</td>
                                 <td>{{ account.password }}</td>
-                                {% comment %} <td>
-                                    <a class="btn btn-danger" href="/delete_account/?id={{ account.id }}">删除</a>
-                                    <a class="btn btn-info" href="/edit_account/?id={{ account.id }}">编辑</a>
-                                </td> {% endcomment %}
+                                <td>
+                                    <a class="btn btn-danger" href="/delete_account/?id={{ account.phone }}">删除</a>
+                                    {% comment %} <a class="btn btn-info" href="/edit_account/?id={{ account.id }}">编辑</a> {% endcomment %}
+                                </td>
                             </tr>
                         {% endfor %}
                         </tbody>
@@ -135,7 +135,6 @@
                 </button>
                 <h4 class="modal-title">用户信息</h4>
             </div>
-            {% comment %} <form class="form-horizontal" action="/account_list/" method="post"> {% endcomment %}
             <form class="form-horizontal">
                 {% comment %} {% csrf_token %} {% endcomment %}
                 {% if message %}
@@ -173,8 +172,8 @@
 <script>
     $("#save").click(function(){
         $("#error").text("")
+        $("#save").attr('disabled',true);
         $.ajax({
-            {% comment %} url:"add_account/", {% endcomment %}
             url:"/account_list/", 
             type:"post",
             data:{
@@ -183,6 +182,7 @@
                 "csrfmiddlewaretoken":$('[name="csrfmiddlewaretoken"]').val()
             },
             success:function(data){
+                $("#save").attr('disabled',false);
                 var dataObj=JSON.parse(data);
                 if(dataObj["msg"] == "success"){
                     $("#exit").click()

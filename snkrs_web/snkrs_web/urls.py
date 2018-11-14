@@ -20,4 +20,5 @@ from appOfSnkrs import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('account_list/', views.account_list),
+    path('delete_account/', views.delete_account),
 ]
