@@ -137,28 +137,36 @@ class Browser(object):
     def __del__(self):
         """当消除browser时,会先关闭浏览器"""
         try:
-            # self.browser.service.process.send_signal(signal.SIGTERM)
             self.browser.close()
-            # self.browser.quit()
-            logging.warn("***********上次关闭异常，此次成功(del)**********")
         except:
-            logging.exception("***********上次正常关闭(del)**********")
+            pass
+        try:
+            self.browser.quit()
+        except:
+            pass
+        try:
+            self.browser.service.stop()
+        except:
+            pass
 
     def close(self):
         """手动关闭浏览器"""
-        # 不能quit(),原因不明
-        for i in range(20):
+        try:
+            self.browser.close()
             try:
-                # self.browser.service.process.send_signal(signal.SIGTERM)
-                self.browser.close()
-                # self.browser.quit()
-                print "browser close sucessful"
-                logging.info("browser close sucessful(close)")
-                break
-            except Exception as e:
-                logging.exception("***********关闭异常%d次(close)**********" % (i))
+                self.browser.quit()
+            except:
                 pass
-
+            try:
+                self.browser.service.stop()
+            except:
+                pass
+            print("browser close successful")
+            logging.info("***********关闭成功(close)**********")
+        except Exception as e:
+            self.__del__()
+            logging.exception("***********关闭异常(close)**********")
+            pass
 
 class Spider(object):
     """爬虫"""
