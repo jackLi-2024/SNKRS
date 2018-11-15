@@ -21,20 +21,24 @@ from manager.spider import *
 class Loginer(object):
     """login"""
 
-    def __init__(self, username="", password="", headless=True, proxies=None, timeout=20):
+    def __init__(self, username="", password="", headless=True, proxies=None, timeout=20,
+                 phantomjs_driver_path=None):
         """
 
         :param username: 用户名
         :param password: 密码
         :param headless: 是否使用无界面
         :param proxies: 代理
+        :param timeout: 超时
+        :param phantomjs_driver_path: phantomjs路径
         """
         self.username = username
         self.password = password
         self.proxies = proxies
         self.headless = headless
         self.timeout = timeout
-        self.B = Browser(self.proxies, self.headless, self.timeout)
+        self.phantomjs_driver_path = phantomjs_driver_path
+        self.B = Browser(self.proxies, self.headless, self.timeout, self.phantomjs_driver_path)
 
     def login(self, url):
         """
@@ -63,13 +67,14 @@ class Loginer(object):
             logging.exception(
                 "%s : (login defeat %s) %s" % (time.asctime(), self.username, str(e)))
             self.B.close()
-            return {"username": self.username, "status": "-1", "item": "login", "msg": e.args[0]}
+            return {"username": self.username, "status": "-1", "item": "login", "msg": str(e)}
 
 
 def test():
     """unittest"""
     browsers = []
-    loginer = Loginer(username="18404983790", password="xxxxxxxxxx1", headless=True, proxies=None, timeout=5)
+    loginer = Loginer(username="18404983790", password="xxxxx", headless=False, proxies=None,
+                      timeout=2)
     if loginer.login(url="https://www.nike.com/cn/launch/").get("status", "-1") == "1":
         browsers.append(loginer.B)
     for one in browsers:

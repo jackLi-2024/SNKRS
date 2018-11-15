@@ -26,7 +26,7 @@ class Addr(object):
 
     def __init__(self, username="", password="", lastname="", firstname="", province="", city="",
                  district="", detail_address="", phone_num="", headless=False, proxies=None,
-                 timeout=20):
+                 timeout=20, phantomjs_driver_path=None):
         """
         相关参数初始化
         :param username: 用户名
@@ -51,12 +51,14 @@ class Addr(object):
         self.proxies = proxies
         self.headless = headless
         self.timeout = timeout
+        self.phantomjs_driver_path = phantomjs_driver_path
         self.setting_status = self.setting_addr(url="https://www.nike.com/cn/zh_cn/p/settings")
 
     def login(self):
         """配置地址之前需要登陆"""
         loginer = Loginer(username=self.username, password=self.password, headless=self.headless,
-                          proxies=self.proxies, timeout=self.timeout)
+                          proxies=self.proxies, timeout=self.timeout,
+                          phantomjs_driver_path=self.phantomjs_driver_path)
         if loginer.login(url="https://www.nike.com/cn/launch/").get("status", "-1") == "1":
             return loginer.B
 
@@ -74,6 +76,7 @@ class Addr(object):
                 # 选中设置地址
                 B.wait_for_element_loaded("addresses", By.CLASS_NAME)
                 elem_addresses = B.browser.find_element_by_class_name("addresses")
+                time.sleep(3)
                 B.click_elem(elem_addresses)
                 # 编辑地址
                 B.wait_for_element_loaded("edit-button-container", By.CLASS_NAME)
@@ -177,7 +180,7 @@ def run(process_num=10):
 
 def test():
     """unittest"""
-    addr = Addr(username="18404983790", password="Ljc19941108", lastname="lee", firstname="jack",
+    addr = Addr(username="18404983790", password="xxxxx1108", lastname="lee", firstname="jack",
                 province=u"黑龙江省", city=u"绥化市",
                 district=u"安达市", detail_address=u"中国黑龙江绥化市安达市栖霞小区9栋505",
                 phone_num="00000000000", headless=True, proxies=None, timeout=40)
